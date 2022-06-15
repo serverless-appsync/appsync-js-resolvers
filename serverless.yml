@@ -1,0 +1,211 @@
+service: blog
+
+frameworkVersion: '3'
+
+configValidationMode: error
+
+plugins:
+  - serverless-appsync-plugin
+
+provider:
+  name: aws
+  region: us-east-1
+
+appSync:
+  name: blogs-api
+
+  logging:
+    level: ALL
+
+  authentication:
+    type: AMAZON_COGNITO_USER_POOLS
+    config:
+      userPoolId: !Ref CognitoUserPool
+      defaultAction: ALLOW
+
+  dataSources:
+    posts:
+      type: AMAZON_DYNAMODB
+      config:
+        tableName: !Ref Posts
+
+    authors:
+      type: AMAZON_DYNAMODB
+      config:
+        tableName: !Ref Authors
+
+    comments:
+      type: AMAZON_DYNAMODB
+      config:
+        tableName: !Ref Comments
+
+  resolvers:
+    Query.getPost:
+      functions:
+        - dataSource: posts
+          code: resolvers/getPost.js
+
+    Query.getPosts:
+      code: resolvers/Query.getPosts.js
+      functions:
+        - getPosts
+
+    Query.getAuthor:
+      code: resolvers/Query.getAuthor.js
+      functions:
+        - getAuthor
+
+    Post.author:
+      code: resolvers/Query.getAuthor.js
+      functions:
+        - getAuthor
+
+    Post.comments:
+      functions:
+        - dataSource: comments
+          code: resolvers/getComments.js
+
+    Author.posts:
+      code: resolvers/Author.posts.js
+      functions:
+        - getPosts
+
+    Mutation.createPost:
+      functions:
+        - dataSource: posts
+          code: resolvers/createPost.js
+
+    Mutation.createAuthor:
+      functions:
+        - dataSource: authors
+          code: resolvers/createAuthor.js
+
+    Mutation.createComment:
+      functions:
+        - dataSource: comments
+          code: resolvers/createComment.js
+
+    Mutation.updatePost:
+      functions:
+        - dataSource: posts
+          code: resolvers/updatePost.js
+        - putEvent
+
+    Mutation.deletePost:
+      functions:
+        - dataSource: posts
+          code: resolvers/deletePost.js
+        - putEvent
+
+  pipelineFunctions:
+    getAuthor:
+      dataSource: authors
+      code: resolvers/getAuthor.js
+
+    getPosts:
+      dataSource: posts
+      code: resolvers/getPosts.js
+
+    putEvent:
+      code: resolvers/putEvent.js
+      dataSource:
+        type: HTTP
+        config:
+          endpoint: !Sub https://events.${AWS::Region}.amazonaws.com/
+          iamRoleStatements:
+            - Effect: 'Allow'
+              Action:
+                - 'events:PutEvents'
+              Resource:
+                - !GetAtt EventBus.Arn
+          authorizationConfig:
+            authorizationType: AWS_IAM
+            awsIamConfig:
+              signingRegion: !Sub ${AWS::Region}
+              signingServiceName: events
+
+resources:
+  Resources:
+    Posts:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${sls:stage}-posts
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: authorName
+            AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: author
+            KeySchema:
+              - AttributeName: authorName
+                KeyType: HASH
+              - AttributeName: createdAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+    Authors:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${sls:stage}-authors
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: name
+            AttributeType: S
+        KeySchema:
+          - AttributeName: name
+            KeyType: HASH
+
+    Comments:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${sls:stage}-comments
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: postId
+            AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: post
+            KeySchema:
+              - AttributeName: postId
+                KeyType: HASH
+              - AttributeName: createdAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+
+    EventBus:
+      Type: AWS::Events::EventBus
+      Properties:
+        Name: blog-event-bus
+
+    CognitoUserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        UserPoolName: blog
+        AliasAttributes:
+          - preferred_username
+          - email
+
+    CognitoUserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        UserPoolId: !Ref CognitoUserPool
+        ClientName: Web
+        CallbackURLs:
+          - https://example.com/signedin
+        LogoutURLs:
+          - https://example.com/signedout
