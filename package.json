@@ -11,6 +11,6 @@
     "@aws-appsync/utils": "^1.0.1",
     "eslint": "^8.28.0",
     "serverless": "^3.19.0",
-    "serverless-appsync-plugin": "^2.0.0-alpha.12"
+    "serverless-appsync-plugin": "^2.0.0-alpha.13"
   }
 }
