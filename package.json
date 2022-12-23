@@ -11,6 +11,10 @@
     "@aws-appsync/utils": "^1.0.1",
     "eslint": "^8.28.0",
     "serverless": "^3.19.0",
-    "serverless-appsync-plugin": "^2.0.0-alpha.13"
+    "serverless-appsync-plugin": "https://github.com/ebisbe/serverless-appsync-plugin.git#substitutions-for-js-resolvers"
+  },
+  "dependencies": {
+    "add": "^2.0.6",
+    "yarn": "^1.22.19"
   }
 }

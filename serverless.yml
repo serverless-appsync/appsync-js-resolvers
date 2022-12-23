@@ -17,6 +17,9 @@ appSync:
   logging:
     level: ALL
 
+  substitutions:
+    testKey: 'abc-123'
+
   authentication:
     type: AMAZON_COGNITO_USER_POOLS
     config:
