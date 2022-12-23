@@ -1,5 +1,6 @@
 import { util } from '@aws-appsync/utils';
 
+const test = '#testKey#';
 export function request(ctx) {
   return {
     operation: 'GetItem',

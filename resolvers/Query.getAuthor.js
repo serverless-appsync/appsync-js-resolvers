@@ -1,3 +1,5 @@
+const test = '#testKey#';
+
 export function request(ctx) {
   return {
     name: ctx.args.name,
