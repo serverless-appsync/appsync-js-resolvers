@@ -2,6 +2,7 @@ type Query {
   getAuthor(name: ID!): Author
   getAuthors: AuthorsResult!
   getPosts(author: ID!): PostsResult!
+  getAllPosts: PostsResult!
   getPost(id: ID!): Post!
 }
 
@@ -24,6 +25,7 @@ type Post {
   authorName: String!
   author: Author!
   comments: [Comment!]
+  publishDate: AWSDate!
   createdAt: AWSDateTime!
   updatedAt: AWSDateTime!
 }
@@ -32,12 +34,14 @@ input CreatePostInput {
   title: String!
   content: String!
   authorName: String!
+  publishDate: AWSDate!
 }
 
 input UpdatePostInput {
   id: ID!
   title: String
   content: String
+  publishDate: AWSDate!
 }
 
 type Author {

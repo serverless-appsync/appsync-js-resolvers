@@ -17,6 +17,8 @@ appSync:
   logging:
     level: ALL
 
+  xrayEnabled: true
+
   authentication:
     type: AMAZON_COGNITO_USER_POOLS
     config:
@@ -45,6 +47,11 @@ appSync:
         - dataSource: posts
           code: resolvers/getPost.js
 
+    Query.getAllPosts:
+      functions:
+        - dataSource: posts
+          code: resolvers/getAllPosts.js
+
     Query.getPosts:
       code: resolvers/Query.getPosts.js
       functions:
@@ -56,7 +63,7 @@ appSync:
         - getAuthor
 
     Post.author:
-      code: resolvers/Query.getAuthor.js
+      code: resolvers/Post.author.js
       functions:
         - getAuthor
 
